@@ -63,7 +63,7 @@
       </div>
     </div>
   </div>
-  <script>
+    <script>
     var SB_URL = "https://supabase.co";
     var SB_KEY = "sb_publishable_nfJsyzjRbQ8jeIHgVHwoqg_-B1glb0G";
     var cur = new Date(), selDate = "", leaves = [], staffs = [];
@@ -73,8 +73,7 @@
       opt.headers = {
         "apikey": SB_KEY,
         "Authorization": "Bearer " + SB_KEY,
-        "Content-Type": "application/json",
-        "Prefer": "return=minimal"
+        "Content-Type": "application/json"
       };
       return fetch(SB_URL + path, opt);
     }
@@ -112,7 +111,7 @@
         var old = sel.value;
         sel.innerHTML = '<option value="">-- 名前を選択 --</option>' + staffs.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join("") + '<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>';
         if (staffs.some(function(s){ return s.name === old; })) sel.value = old;
-        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(' + s.id + ')">削除</button></div>'; }).join("");
+        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(\'' + s.name + '\')">削除</button></div>'; }).join("");
         document.getElementById("status").innerText = "";
       } catch (e) { document.getElementById("status").innerText = "エラー: " + e.message; }
     }
@@ -121,7 +120,7 @@
 
     function openM(ds) { selDate = ds; document.getElementById("m-title").innerText = ds; document.getElementById("modal").style.display = "flex"; }
     async function delL(e, id) { e.stopPropagation(); if (confirm("削除しますか？")) { await api("/leaves?id=eq." + id, { method: "DELETE" }); loadAll(); } }
-    async function delS(id) { if (confirm("削除しますか？")) { await api("/staff?id=eq." + id, { method: "DELETE" }); loadAll(); } }
+    async function delS(name) { if (confirm("削除しますか？")) { await api("/staff?name=eq." + encodeURIComponent(name), { method: "DELETE" }); loadAll(); } }
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
