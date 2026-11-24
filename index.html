@@ -31,7 +31,7 @@
     header h1 { font-size: 22px; margin: 0 0 8px 0; color: #5a67d8; }
     .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; margin-bottom: 16px; }
     .legend span { padding: 4px 12px; border-radius: 12px; font-weight: 700; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); }
-    #calendar { background: var(--card-bg); padding: 16px; border-radius: 20px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); }
+    #calendar { background: var(--card-bg); padding: 16px; border-radius: 20px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); min-height: 400px; }
     .fc-toolbar-title { font-size: 18px !important; }
     .fc-button { background: var(--card-bg) !important; border: none !important; color: var(--text-main) !important; border-radius: 12px !important; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light) !important; font-weight: 700 !important; }
     .fc-daygrid-day { cursor: pointer; }
@@ -101,7 +101,6 @@
       </div>
     </div>
   </div>
-
   <script type="module">
     import { initializeApp } from "https://gstatic.com";
     import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://gstatic.com";
