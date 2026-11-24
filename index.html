@@ -66,8 +66,18 @@
   <script>
     var SB_URL = "https://supabase.co";
     var SB_KEY = "sb_publishable_nfJsyzjRbQ8jeIHgVHwoqg_-B1glb0G";
-    var HDR = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
     var cur = new Date(), selDate = "", leaves = [], staffs = [];
+
+    function api(path, opt) {
+      opt = opt || {};
+      opt.headers = {
+        "apikey": SB_KEY,
+        "Authorization": "Bearer " + SB_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+      };
+      return fetch(SB_URL + path, opt);
+    }
 
     function draw() {
       var y = cur.getFullYear(), m = cur.getMonth();
@@ -89,12 +99,12 @@
 
     async function loadAll() {
       try {
-        var r1 = await fetch(SB_URL + "/leaves?select=*&order=id.asc", { headers: HDR });
+        var r1 = await api("/leaves?select=*");
         if (!r1.ok) throw new Error(await r1.text());
         leaves = await r1.json();
         draw();
 
-        var r2 = await fetch(SB_URL + "/staff?select=*&order=id.asc", { headers: HDR });
+        var r2 = await api("/staff?select=*");
         if (!r2.ok) throw new Error(await r2.text());
         staffs = await r2.json();
 
@@ -104,14 +114,14 @@
         if (staffs.some(function(s){ return s.name === old; })) sel.value = old;
         document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(' + s.id + ')">削除</button></div>'; }).join("");
         document.getElementById("status").innerText = "";
-      } catch (e) { document.getElementById("status").innerText = "通信エラー: " + e.message; }
+      } catch (e) { document.getElementById("status").innerText = "エラー: " + e.message; }
     }
     loadAll();
     setInterval(loadAll, 5000);
 
     function openM(ds) { selDate = ds; document.getElementById("m-title").innerText = ds; document.getElementById("modal").style.display = "flex"; }
-    async function delL(e, id) { e.stopPropagation(); if (confirm("削除しますか？")) { await fetch(SB_URL + "/leaves?id=eq." + id, { method: "DELETE", headers: HDR }); loadAll(); } }
-    async function delS(id) { if (confirm("削除しますか？")) { await fetch(SB_URL + "/staff?id=eq." + id, { method: "DELETE", headers: HDR }); loadAll(); } }
+    async function delL(e, id) { e.stopPropagation(); if (confirm("削除しますか？")) { await api("/leaves?id=eq." + id, { method: "DELETE" }); loadAll(); } }
+    async function delS(id) { if (confirm("削除しますか？")) { await api("/staff?id=eq." + id, { method: "DELETE" }); loadAll(); } }
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
@@ -122,7 +132,7 @@
     document.getElementById("add-btn").onclick = async function() {
       var n = document.getElementById("new-name").value.trim();
       if (!n) return;
-      var res = await fetch(SB_URL + "/staff", { method: "POST", headers: HDR, body: JSON.stringify({ name: n }) });
+      var res = await api("/staff", { method: "POST", body: JSON.stringify({ name: n }) });
       if (!res.ok) return alert("追加エラー: " + await res.text());
       document.getElementById("new-name").value = "";
       document.getElementById("add-box").style.display = "none";
@@ -133,7 +143,7 @@
       var name = document.getElementById("staff").value;
       if (!name || name.indexOf("__") === 0) return alert("名前を選択してください");
       var type = document.querySelector('input[name="lt"]:checked').value;
-      var res = await fetch(SB_URL + "/leaves", { method: "POST", headers: HDR, body: JSON.stringify({ date: selDate, name: name, type: type }) });
+      var res = await api("/leaves", { method: "POST", body: JSON.stringify({ date: selDate, name: name, type: type }) });
       if (!res.ok) return alert("登録エラー: " + await res.text());
       document.getElementById("modal").style.display = "none";
       loadAll();
