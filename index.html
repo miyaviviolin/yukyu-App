@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>有給休暇共有カレンダー</title>
-  <script src="https://gstatic.com"></script>
-  <script src="https://gstatic.com"></script>
   <style>
     * { box-sizing: border-box; font-family: sans-serif; }
     body { margin: 0; padding: 16px; background: #f4f6f9; color: #4a5568; display: flex; justify-content: center; }
@@ -66,7 +64,9 @@
     </div>
   </div>
   <script>
-    var cur = new Date(), selDate = "", leaves = [], staffs = [], db = null;
+    var API = "https://googleapis.com";
+    var cur = new Date(), selDate = "", leaves = [], staffs = [];
+
     function draw() {
       var y = cur.getFullYear(), m = cur.getMonth();
       document.getElementById("ym").innerText = y + "年 " + (m + 1) + "月";
@@ -78,15 +78,45 @@
         var ds = y + "-" + String(m+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
         var items = leaves.filter(function(l){ return l.date === ds; }).map(function(l){
           var bg = l.type === "全休" ? "#ffb7b2" : l.type === "午前休" ? "#a0d2eb" : "#b5ead7";
-          return '<div class="badge" style="background:' + bg + '" onclick="delL(event,\'' + l.id + '\')">' + l.name + '・' + l.type + '</div>';
+          return '<div class="badge" style="background:' + bg + '" onclick="delL(event,\'' + l.path + '\')">' + l.name + '・' + l.type + '</div>';
         }).join("");
         cal.innerHTML += '<div class="day" onclick="openM(\'' + ds + '\')"><strong>' + d + '</strong>' + items + '</div>';
       }
     }
     draw();
+
+    async function loadAll() {
+      try {
+        var r1 = await fetch(API + "/leaves?pageSize=300");
+        var j1 = await r1.json();
+        if (j1.error) throw new Error(j1.error.message);
+        leaves = (j1.documents || []).map(function(doc) {
+          var f = doc.fields || {};
+          return { path: doc.name, date: f.date ? f.date.stringValue : "", name: f.name ? f.name.stringValue : "", type: f.type ? f.type.stringValue : "" };
+        });
+        draw();
+
+        var r2 = await fetch(API + "/staff?pageSize=100");
+        var j2 = await r2.json();
+        staffs = (j2.documents || []).map(function(doc) {
+          var f = doc.fields || {};
+          return { path: doc.name, name: f.name ? f.name.stringValue : "", ts: f.createdAt ? Number(f.createdAt.integerValue) : 0 };
+        }).sort(function(a, b) { return a.ts - b.ts; });
+
+        var sel = document.getElementById("staff");
+        var old = sel.value;
+        sel.innerHTML = '<option value="">-- 名前を選択 --</option>' + staffs.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join("") + '<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>';
+        if (staffs.some(function(s){ return s.name === old; })) sel.value = old;
+        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(\'' + s.path + '\')">削除</button></div>'; }).join("");
+        document.getElementById("status").innerText = "";
+      } catch (e) { document.getElementById("status").innerText = "通信エラー: " + e.message; }
+    }
+    loadAll();
+    setInterval(loadAll, 5000);
+
     function openM(ds) { selDate = ds; document.getElementById("m-title").innerText = ds; document.getElementById("modal").style.display = "flex"; }
-    function delL(e, id) { e.stopPropagation(); if (db && confirm("削除しますか？")) db.collection("leaves").doc(id).delete(); }
-    function delS(id) { if (db && confirm("削除しますか？")) db.collection("staff").doc(id).delete(); }
+    async function delL(e, path) { e.stopPropagation(); if (confirm("削除しますか？")) { await fetch("https://googleapis.com" + path, { method: "DELETE" }); loadAll(); } }
+    async function delS(path) { if (confirm("削除しますか？")) { await fetch("https://googleapis.com" + path, { method: "DELETE" }); loadAll(); } }
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
@@ -94,39 +124,22 @@
       document.getElementById("add-box").style.display = e.target.value === "__ADD__" ? "block" : "none";
       document.getElementById("del-box").style.display = e.target.value === "__DEL__" ? "block" : "none";
     };
-    try {
-      firebase.initializeApp({
-        apiKey: "AIzaSyB7JI_LpPTHInXfvtlGfVRU1I_DOZTIFmg",
-        authDomain: "://firebaseapp.com",
-        projectId: "yukyu-calendar-5ff53",
-        storageBucket: "yukyu-calendar-5ff53.firebasestorage.app",
-        messagingSenderId: "844246207083",
-        appId: "1:844246207083:web:2e1ed37c88b787a8827f2e"
-      });
-      db = firebase.firestore();
-      db.collection("leaves").onSnapshot(function(snap) {
-        leaves = snap.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; });
-        draw();
-      }, function(err) { document.getElementById("status").innerText = "DBエラー: " + err.message; });
-      db.collection("staff").orderBy("createdAt", "asc").onSnapshot(function(snap) {
-        staffs = snap.docs.map(function(d) { var o = d.data(); o.id = d.id; return o; });
-        document.getElementById("staff").innerHTML = '<option value="">-- 名前を選択 --</option>' + staffs.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join("") + '<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>';
-        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(\'' + s.id + '\')">削除</button></div>'; }).join("");
-      });
-    } catch (e) { document.getElementById("status").innerText = "起動エラー: " + e.message; }
-    document.getElementById("add-btn").onclick = function() {
+    document.getElementById("add-btn").onclick = async function() {
       var n = document.getElementById("new-name").value.trim();
-      if (!n || !db) return;
-      db.collection("staff").add({ name: n, createdAt: Date.now() });
+      if (!n) return;
+      await fetch(API + "/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { name: { stringValue: n }, createdAt: { integerValue: String(Date.now()) } } }) });
       document.getElementById("new-name").value = "";
       document.getElementById("add-box").style.display = "none";
+      await loadAll();
+      document.getElementById("staff").value = n;
     };
-    document.getElementById("save").onclick = function() {
+    document.getElementById("save").onclick = async function() {
       var name = document.getElementById("staff").value;
       if (!name || name.indexOf("__") === 0) return alert("名前を選択してください");
       var type = document.querySelector('input[name="lt"]:checked').value;
-      if (db) db.collection("leaves").add({ date: selDate, name: name, type: type, createdAt: Date.now() });
+      await fetch(API + "/leaves", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { date: { stringValue: selDate }, name: { stringValue: name }, type: { stringValue: type }, createdAt: { integerValue: String(Date.now()) } } }) });
       document.getElementById("modal").style.display = "none";
+      loadAll();
     };
   </script>
 </body>
