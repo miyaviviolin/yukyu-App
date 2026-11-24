@@ -4,204 +4,140 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>有給休暇共有カレンダー</title>
-  <script src="https://jsdelivr.net"></script>
-  <link href="https://googleapis.com" rel="stylesheet">
   <style>
-    :root {
-      --bg-color: #f4f6f9;
-      --card-bg: #f4f6f9;
-      --text-main: #4a5568;
-      --text-sub: #718096;
-      --shadow-light: #ffffff;
-      --shadow-dark: #d1d9e6;
-      --accent-pink: #ffb7b2;
-      --accent-blue: #a0d2eb;
-      --accent-green: #b5ead7;
-    }
-    * { box-sizing: border-box; font-family: 'M PLUS Rounded 1c', sans-serif; }
-    body { margin: 0; padding: 16px; background-color: var(--bg-color); color: var(--text-main); display: flex; justify-content: center; }
-    .neu-box { background: var(--card-bg); border-radius: 24px; box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light); }
-    .neu-btn { background: var(--card-bg); border: none; border-radius: 16px; padding: 12px 20px; font-size: 15px; font-weight: 700; color: var(--text-main); cursor: pointer; box-shadow: 5px 5px 10px var(--shadow-dark), -5px -5px 10px var(--shadow-light); transition: all 0.15s ease; }
-    .neu-btn:active { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); transform: scale(0.98); }
-    .neu-btn-primary { background: linear-gradient(145deg, #b8c6ff, #9aaaf5); color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-    .neu-btn-danger { background: linear-gradient(145deg, #ffc4c0, #f59e98); color: #ffffff; padding: 6px 14px; font-size: 13px; }
-    .neu-input, .neu-select { width: 100%; padding: 12px 16px; border: none; border-radius: 14px; background: var(--bg-color); color: var(--text-main); font-size: 15px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; }
-    .container { width: 100%; max-width: 900px; padding: 20px; }
-    header { text-align: center; margin-bottom: 16px; }
-    header h1 { font-size: 22px; margin: 0 0 8px 0; color: #5a67d8; }
-    .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; margin-bottom: 16px; }
-    .legend span { padding: 4px 12px; border-radius: 12px; font-weight: 700; box-shadow: 3px 3px 6px var(--shadow-dark), -3px -3px 6px var(--shadow-light); }
-    #calendar { background: var(--card-bg); padding: 16px; border-radius: 20px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); min-height: 400px; }
-    .fc-toolbar-title { font-size: 18px !important; }
-    .fc-button { background: var(--card-bg) !important; border: none !important; color: var(--text-main) !important; border-radius: 12px !important; box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light) !important; font-weight: 700 !important; }
-    .fc-daygrid-day { cursor: pointer; }
-    .fc-event { border: none !important; border-radius: 8px !important; padding: 2px 4px !important; font-size: 12px !important; font-weight: 700 !important; color: #4a5568 !important; }
-    .modal-overlay { position: fixed; inset: 0; background: rgba(74, 85, 104, 0.35); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
-    .modal-content { width: 100%; max-width: 400px; padding: 24px; position: relative; }
-    .modal-title { font-size: 18px; font-weight: 700; margin: 0 0 16px 0; text-align: center; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-sub); }
-    .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .type-option input { display: none; }
-    .type-option label { display: block; text-align: center; padding: 12px 6px; border-radius: 14px; cursor: pointer; font-size: 14px; color: var(--text-main); box-shadow: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light); }
-    .type-option input:checked + label[data-type="全休"] { background: var(--accent-pink); }
-    .type-option input:checked + label[data-type="午前休"] { background: var(--accent-blue); }
-    .type-option input:checked + label[data-type="午後休"] { background: var(--accent-green); }
-    .btn-row { display: flex; gap: 12px; margin-top: 20px; }
-    .btn-row button { flex: 1; }
-    #new-staff-area, #delete-staff-area { margin-top: 12px; padding: 14px; border-radius: 16px; background: var(--bg-color); box-shadow: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light); display: none; }
-    .staff-list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 4px; border-bottom: 1px solid #e2e8f0; }
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { margin: 0; padding: 16px; background: #f4f6f9; color: #4a5568; display: flex; justify-content: center; }
+    .box { width: 100%; max-width: 800px; background: #f4f6f9; border-radius: 24px; padding: 20px; box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff; }
+    h1 { text-align: center; font-size: 20px; color: #5a67d8; margin: 0 0 12px; }
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .btn { background: #f4f6f9; border: none; border-radius: 14px; padding: 10px 16px; font-weight: bold; color: #4a5568; cursor: pointer; box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff; }
+    .btn-primary { background: #9aaaf5; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .dow { text-align: center; font-size: 12px; font-weight: bold; padding: 4px; color: #718096; }
+    .day { min-height: 75px; background: #f4f6f9; border-radius: 12px; padding: 6px; box-shadow: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; }
+    .badge { margin-top: 4px; padding: 2px 5px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-body { width: 100%; max-width: 360px; background: #f4f6f9; border-radius: 20px; padding: 20px; box-shadow: 8px 8px 16px #b8c2d1; }
+    select, input[type="text"] { width: 100%; padding: 10px; border: none; border-radius: 12px; background: #f4f6f9; box-shadow: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff; margin: 8px 0 14px; font-size: 15px; }
+    .types { display: flex; gap: 8px; margin-bottom: 16px; }
+    .types label { flex: 1; text-align: center; padding: 10px; border-radius: 12px; box-shadow: 3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .types input { display: none; }
+    .types input:checked + label { background: #ffb7b2; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15); }
   </style>
 </head>
 <body>
-  <div class="container neu-box" id="main-app">
-    <header>
-      <h1>🌸 有給休暇 共有カレンダー</h1>
-      <p style="font-size:13px; color:var(--text-sub); margin:0;">日付をタップして登録 ／ 予定をタップして削除</p>
-    </header>
-    <div class="legend">
-      <span style="background:var(--accent-pink);">全休</span>
-      <span style="background:var(--accent-blue);">午前休</span>
-      <span style="background:var(--accent-green);">午後休</span>
+  <div class="box">
+    <h1>🌸 有給休暇 共有カレンダー</h1>
+    <div id="err" style="color:red; font-size:12px; text-align:center;"></div>
+    <div class="nav">
+      <button class="btn" id="prev">◀ 前月</button>
+      <strong id="ym" style="font-size:18px;"></strong>
+      <button class="btn" id="next">次月 ▶</button>
     </div>
-    <div id="calendar"></div>
+    <div class="grid" id="cal"></div>
   </div>
 
-  <div class="modal-overlay" id="input-modal">
-    <div class="modal-content neu-box">
-      <h3 class="modal-title" id="modal-date-title">有給登録</h3>
-      <div class="form-group">
-        <label>職員名を選択</label>
-        <select id="staff-select" class="neu-select">
-          <option value="">-- 名前を選んでください --</option>
-        </select>
-        <div id="new-staff-area">
-          <label>新しい職員名を入力</label>
-          <div style="display:flex; gap:8px;">
-            <input type="text" id="new-staff-name" class="neu-input" placeholder="例：山田 太郎">
-            <button type="button" id="add-staff-btn" class="neu-btn neu-btn-primary">追加</button>
-          </div>
-        </div>
-        <div id="delete-staff-area">
-          <label>削除する職員を選択（退職者など）</label>
-          <div id="staff-delete-list" style="max-height:150px; overflow-y:auto;"></div>
-        </div>
+  <div class="modal" id="modal">
+    <div class="modal-body">
+      <h3 id="m-title" style="margin:0 0 12px; text-align:center;"></h3>
+      <label style="font-size:12px; font-weight:bold;">職員名</label>
+      <select id="staff"></select>
+      <div id="add-box" style="display:none; margin-bottom:10px;">
+        <input type="text" id="new-name" placeholder="新しい職員名">
+        <button class="btn btn-primary" id="add-btn" style="width:100%;">名前を追加</button>
       </div>
-      <div class="form-group">
-        <label>休暇の種類</label>
-        <div class="type-grid">
-          <div class="type-option"><input type="radio" name="leaveType" id="type-full" value="全休" checked><label for="type-full" data-type="全休">全休</label></div>
-          <div class="type-option"><input type="radio" name="leaveType" id="type-am" value="午前休"><label for="type-am" data-type="午前休">午前休</label></div>
-          <div class="type-option"><input type="radio" name="leaveType" id="type-pm" value="午後休"><label for="type-pm" data-type="午後休">午後休</label></div>
-        </div>
+      <div id="del-box" style="display:none; margin-bottom:10px;"></div>
+      <label style="font-size:12px; font-weight:bold;">休暇の種類</label>
+      <div class="types">
+        <input type="radio" name="lt" id="t1" value="全休" checked><label for="t1">全休</label>
+        <input type="radio" name="lt" id="t2" value="午前休"><label for="t2">午前休</label>
+        <input type="radio" name="lt" id="t3" value="午後休"><label for="t3">午後休</label>
       </div>
-      <div class="btn-row">
-        <button type="button" id="cancel-btn" class="neu-btn">キャンセル</button>
-        <button type="button" id="save-btn" class="neu-btn neu-btn-primary">登録する</button>
+      <div style="display:flex; gap:10px;">
+        <button class="btn" id="close" style="flex:1;">閉じる</button>
+        <button class="btn btn-primary" id="save" style="flex:1;">登録</button>
       </div>
     </div>
   </div>
+
   <script type="module">
+    window.onerror = (m) => document.getElementById("err").innerText = "エラー: " + m;
     import { initializeApp } from "https://gstatic.com";
     import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://gstatic.com";
 
-    const firebaseConfig = {
+    const db = getFirestore(initializeApp({
       apiKey: "AIzaSyB7JI_LpPTHInXfvtlGfVRU1I_DOZTIFmg",
       authDomain: "://firebaseapp.com",
       projectId: "yukyu-calendar-5ff53",
       storageBucket: "yukyu-calendar-5ff53.firebasestorage.app",
       messagingSenderId: "844246207083",
-      appId: "1:844246207083:web:2e1ed37c88b787a8827f2e",
-      measurementId: "G-QE6EXSG6PC"
-    };
+      appId: "1:844246207083:web:2e1ed37c88b787a8827f2e"
+    }));
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let selectedDate = "", staffList = [];
+    let cur = new Date(), selDate = "", leaves = [], staffs = [];
 
-    const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
-      initialView: "dayGridMonth",
-      locale: "ja",
-      height: "auto",
-      headerToolbar: { left: "prev,next today", center: "title", right: "" },
-      dateClick: function(info) {
-        selectedDate = info.dateStr;
-        document.getElementById("modal-date-title").innerText = selectedDate + " の有給登録";
-        document.getElementById("staff-select").value = "";
-        document.getElementById("new-staff-area").style.display = "none";
-        document.getElementById("delete-staff-area").style.display = "none";
-        document.getElementById("input-modal").style.display = "flex";
-      },
-      eventClick: async function(info) {
-        if (confirm("「" + info.event.title + "」の予定を削除しますか？")) {
-          await deleteDoc(doc(db, "leaves", info.event.id));
-        }
+    function draw() {
+      const y = cur.getFullYear(), m = cur.getMonth();
+      document.getElementById("ym").innerText = `${y}年 ${m + 1}月`;
+      const cal = document.getElementById("cal");
+      cal.innerHTML = ["日","月","火","水","木","金","土"].map(d => `<div class="dow">${d}</div>`).join("");
+      const first = new Date(y, m, 1).getDay(), last = new Date(y, m + 1, 0).getDate();
+      for (let i = 0; i < first; i++) cal.innerHTML += `<div></div>`;
+      for (let d = 1; d <= last; d++) {
+        const ds = `${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const items = leaves.filter(l => l.date === ds).map(l => {
+          const bg = l.type === "全休" ? "#ffb7b2" : l.type === "午前休" ? "#a0d2eb" : "#b5ead7";
+          return `<div class="badge" style="background:${bg}" data-id="${l.id}" data-t="${l.name}(${l.type})">${l.name}・${l.type[0]}</div>`;
+        }).join("");
+        cal.innerHTML += `<div class="day" data-d="${ds}"><strong>${d}</strong>${items}</div>`;
       }
-    });
-    calendar.render();
-
-    onSnapshot(collection(db, "leaves"), (snap) => {
-      calendar.removeAllEvents();
-      snap.forEach((d) => {
-        const data = d.data();
-        let bg = "#ffb7b2";
-        if (data.type === "午前休") bg = "#a0d2eb";
-        if (data.type === "午後休") bg = "#b5ead7";
-        calendar.addEvent({ id: d.id, title: data.name + " (" + data.type + ")", start: data.date, backgroundColor: bg });
+      document.querySelectorAll(".day").forEach(el => el.onclick = () => {
+        selDate = el.dataset.d;
+        document.getElementById("m-title").innerText = selDate;
+        document.getElementById("modal").style.display = "flex";
       });
-    });
-
-    onSnapshot(query(collection(db, "staff"), orderBy("createdAt", "asc")), (snap) => {
-      staffList = [];
-      snap.forEach((d) => staffList.push({ id: d.id, name: d.data().name }));
-      const sel = document.getElementById("staff-select");
-      const cur = sel.value;
-      sel.innerHTML = '<option value="">-- 名前を選んでください --</option>';
-      staffList.forEach((s) => { const o = document.createElement("option"); o.value = s.name; o.textContent = s.name; sel.appendChild(o); });
-      sel.insertAdjacentHTML("beforeend", '<option value="__ADD__">＋ 新規登録</option><option value="__DELETE__">− 職員を削除</option>');
-      if (staffList.some(s => s.name === cur)) sel.value = cur;
-
-      const delBox = document.getElementById("staff-delete-list");
-      delBox.innerHTML = staffList.length ? "" : '<p style="font-size:13px; color:var(--text-sub);">登録されている職員はいません</p>';
-      staffList.forEach((s) => {
-        const div = document.createElement("div");
-        div.className = "staff-list-item";
-        div.innerHTML = '<span style="font-size:14px;">' + s.name + '</span>';
-        const btn = document.createElement("button");
-        btn.type = "button"; btn.className = "neu-btn neu-btn-danger"; btn.textContent = "削除";
-        btn.onclick = async () => { if (confirm("「" + s.name + "」さんをリストから削除しますか？")) await deleteDoc(doc(db, "staff", s.id)); };
-        div.appendChild(btn);
-        delBox.appendChild(div);
+      document.querySelectorAll(".badge").forEach(el => el.onclick = async (e) => {
+        e.stopPropagation();
+        if (confirm(el.dataset.t + " を削除しますか？")) await deleteDoc(doc(db, "leaves", el.dataset.id));
       });
+    }
+    draw();
+
+    document.getElementById("prev").onclick = () => { cur.setMonth(cur.getMonth() - 1); draw(); };
+    document.getElementById("next").onclick = () => { cur.setMonth(cur.getMonth() + 1); draw(); };
+    document.getElementById("close").onclick = () => document.getElementById("modal").style.display = "none";
+
+    onSnapshot(collection(db, "leaves"), snap => {
+      leaves = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      draw();
+    }, e => document.getElementById("err").innerText = "DB接続エラー: " + e.message);
+
+    onSnapshot(query(collection(db, "staff"), orderBy("createdAt", "asc")), snap => {
+      staffs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const sel = document.getElementById("staff");
+      sel.innerHTML = `<option value="">-- 名前を選択 --</option>` + staffs.map(s => `<option value="${s.name}">${s.name}</option>`).join("") + `<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>`;
+      document.getElementById("del-box").innerHTML = staffs.map(s => `<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>${s.name}</span><button class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS('${s.id}','${s.name}')">削除</button></div>`).join("");
     });
 
-    document.getElementById("staff-select").addEventListener("change", (e) => {
-      document.getElementById("new-staff-area").style.display = (e.target.value === "__ADD__") ? "block" : "none";
-      document.getElementById("delete-staff-area").style.display = (e.target.value === "__DELETE__") ? "block" : "none";
-    });
-
-    document.getElementById("add-staff-btn").addEventListener("click", async () => {
-      const inp = document.getElementById("new-staff-name");
-      const name = inp.value.trim();
-      if (!name) return alert("名前を入力してください");
-      if (staffList.some(s => s.name === name)) return alert("すでに登録されています");
-      await addDoc(collection(db, "staff"), { name: name, createdAt: Date.now() });
-      inp.value = "";
-      document.getElementById("new-staff-area").style.display = "none";
-      setTimeout(() => { document.getElementById("staff-select").value = name; }, 300);
-    });
-
-    document.getElementById("save-btn").addEventListener("click", async () => {
-      const name = document.getElementById("staff-select").value;
-      if (!name || name === "__ADD__" || name === "__DELETE__") return alert("職員名を選択してください");
-      const type = document.querySelector('input[name="leaveType"]:checked').value;
-      await addDoc(collection(db, "leaves"), { date: selectedDate, name: name, type: type, createdAt: Date.now() });
-      document.getElementById("input-modal").style.display = "none";
-    });
-
-    document.getElementById("cancel-btn").addEventListener("click", () => {
-      document.getElementById("input-modal").style.display = "none";
-    });
+    window.delS = async (id, n) => { if (confirm(n + " を削除しますか？")) await deleteDoc(doc(db, "staff", id)); };
+    document.getElementById("staff").onchange = e => {
+      document.getElementById("add-box").style.display = e.target.value === "__ADD__" ? "block" : "none";
+      document.getElementById("del-box").style.display = e.target.value === "__DEL__" ? "block" : "none";
+    };
+    document.getElementById("add-btn").onclick = async () => {
+      const n = document.getElementById("new-name").value.trim();
+      if (!n) return;
+      await addDoc(collection(db, "staff"), { name: n, createdAt: Date.now() });
+      document.getElementById("new-name").value = "";
+      document.getElementById("add-box").style.display = "none";
+    };
+    document.getElementById("save").onclick = async () => {
+      const name = document.getElementById("staff").value;
+      if (!name || name.startsWith("__")) return alert("名前を選んでください");
+      const type = document.querySelector('input[name="lt"]:checked').value;
+      await addDoc(collection(db, "leaves"), { date: selDate, name, type, createdAt: Date.now() });
+      document.getElementById("modal").style.display = "none";
+    };
   </script>
 </body>
 </html>
