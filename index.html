@@ -26,9 +26,7 @@
     .neu-btn-primary { background: linear-gradient(145deg, #b8c6ff, #9aaaf5); color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
     .neu-btn-danger { background: linear-gradient(145deg, #ffc4c0, #f59e98); color: #ffffff; padding: 6px 14px; font-size: 13px; }
     .neu-input, .neu-select { width: 100%; padding: 12px 16px; border: none; border-radius: 14px; background: var(--bg-color); color: var(--text-main); font-size: 15px; box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light); outline: none; }
-    #auth-screen { position: fixed; inset: 0; background: var(--bg-color); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
-    .auth-card { width: 100%; max-width: 360px; padding: 32px 24px; text-align: center; }
-    .container { width: 100%; max-width: 900px; padding: 20px; display: none; }
+    .container { width: 100%; max-width: 900px; padding: 20px; }
     header { text-align: center; margin-bottom: 16px; }
     header h1 { font-size: 22px; margin: 0 0 8px 0; color: #5a67d8; }
     .legend { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; margin-bottom: 16px; }
@@ -56,16 +54,6 @@
   </style>
 </head>
 <body>
-  <div id="auth-screen">
-    <div class="neu-box auth-card">
-      <h2 style="margin-top:0; color:#5a67d8;">有給休暇カレンダー</h2>
-      <p style="font-size:14px; color:var(--text-sub); margin-bottom:20px;">合言葉を入力してください</p>
-      <input type="password" id="pass-input" class="neu-input" placeholder="合言葉を入力" style="text-align:center; margin-bottom:16px;">
-      <button type="button" id="login-btn" class="neu-btn neu-btn-primary" style="width:100%;">開く</button>
-      <p id="pass-error" style="color:#e53e3e; font-size:13px; margin-top:12px; display:none;">合言葉が違います</p>
-    </div>
-  </div>
-
   <div class="container neu-box" id="main-app">
     <header>
       <h1>🌸 有給休暇 共有カレンダー</h1>
@@ -114,22 +102,6 @@
     </div>
   </div>
 
-  <script>
-    function unlockApp() {
-      const val = document.getElementById("pass-input").value.trim();
-      if (val === "291dc") {
-        localStorage.setItem("yukyu_auth", "ok");
-        document.getElementById("auth-screen").style.display = "none";
-        document.getElementById("main-app").style.display = "block";
-        if (window.startCalendarApp) window.startCalendarApp();
-      } else {
-        document.getElementById("pass-error").style.display = "block";
-      }
-    }
-    document.getElementById("login-btn").addEventListener("click", unlockApp);
-    document.getElementById("pass-input").addEventListener("keypress", function(e) { if (e.key === "Enter") unlockApp(); });
-  </script>
-
   <script type="module">
     import { initializeApp } from "https://gstatic.com";
     import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://gstatic.com";
@@ -146,73 +118,63 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    let calendar, selectedDate = "", staffList = [], started = false;
+    let selectedDate = "", staffList = [];
 
-    window.startCalendarApp = function() {
-      if (started) return;
-      started = true;
-      calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
-        initialView: "dayGridMonth",
-        locale: "ja",
-        height: "auto",
-        headerToolbar: { left: "prev,next today", center: "title", right: "" },
-        dateClick: function(info) {
-          selectedDate = info.dateStr;
-          document.getElementById("modal-date-title").innerText = selectedDate + " の有給登録";
-          document.getElementById("staff-select").value = "";
-          document.getElementById("new-staff-area").style.display = "none";
-          document.getElementById("delete-staff-area").style.display = "none";
-          document.getElementById("input-modal").style.display = "flex";
-        },
-        eventClick: async function(info) {
-          if (confirm("「" + info.event.title + "」の予定を削除しますか？")) {
-            await deleteDoc(doc(db, "leaves", info.event.id));
-          }
+    const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+      initialView: "dayGridMonth",
+      locale: "ja",
+      height: "auto",
+      headerToolbar: { left: "prev,next today", center: "title", right: "" },
+      dateClick: function(info) {
+        selectedDate = info.dateStr;
+        document.getElementById("modal-date-title").innerText = selectedDate + " の有給登録";
+        document.getElementById("staff-select").value = "";
+        document.getElementById("new-staff-area").style.display = "none";
+        document.getElementById("delete-staff-area").style.display = "none";
+        document.getElementById("input-modal").style.display = "flex";
+      },
+      eventClick: async function(info) {
+        if (confirm("「" + info.event.title + "」の予定を削除しますか？")) {
+          await deleteDoc(doc(db, "leaves", info.event.id));
         }
+      }
+    });
+    calendar.render();
+
+    onSnapshot(collection(db, "leaves"), (snap) => {
+      calendar.removeAllEvents();
+      snap.forEach((d) => {
+        const data = d.data();
+        let bg = "#ffb7b2";
+        if (data.type === "午前休") bg = "#a0d2eb";
+        if (data.type === "午後休") bg = "#b5ead7";
+        calendar.addEvent({ id: d.id, title: data.name + " (" + data.type + ")", start: data.date, backgroundColor: bg });
       });
-      calendar.render();
+    });
 
-      onSnapshot(collection(db, "leaves"), (snap) => {
-        calendar.removeAllEvents();
-        snap.forEach((d) => {
-          const data = d.data();
-          let bg = "#ffb7b2";
-          if (data.type === "午前休") bg = "#a0d2eb";
-          if (data.type === "午後休") bg = "#b5ead7";
-          calendar.addEvent({ id: d.id, title: data.name + " (" + data.type + ")", start: data.date, backgroundColor: bg });
-        });
+    onSnapshot(query(collection(db, "staff"), orderBy("createdAt", "asc")), (snap) => {
+      staffList = [];
+      snap.forEach((d) => staffList.push({ id: d.id, name: d.data().name }));
+      const sel = document.getElementById("staff-select");
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">-- 名前を選んでください --</option>';
+      staffList.forEach((s) => { const o = document.createElement("option"); o.value = s.name; o.textContent = s.name; sel.appendChild(o); });
+      sel.insertAdjacentHTML("beforeend", '<option value="__ADD__">＋ 新規登録</option><option value="__DELETE__">− 職員を削除</option>');
+      if (staffList.some(s => s.name === cur)) sel.value = cur;
+
+      const delBox = document.getElementById("staff-delete-list");
+      delBox.innerHTML = staffList.length ? "" : '<p style="font-size:13px; color:var(--text-sub);">登録されている職員はいません</p>';
+      staffList.forEach((s) => {
+        const div = document.createElement("div");
+        div.className = "staff-list-item";
+        div.innerHTML = '<span style="font-size:14px;">' + s.name + '</span>';
+        const btn = document.createElement("button");
+        btn.type = "button"; btn.className = "neu-btn neu-btn-danger"; btn.textContent = "削除";
+        btn.onclick = async () => { if (confirm("「" + s.name + "」さんをリストから削除しますか？")) await deleteDoc(doc(db, "staff", s.id)); };
+        div.appendChild(btn);
+        delBox.appendChild(div);
       });
-
-      onSnapshot(query(collection(db, "staff"), orderBy("createdAt", "asc")), (snap) => {
-        staffList = [];
-        snap.forEach((d) => staffList.push({ id: d.id, name: d.data().name }));
-        const sel = document.getElementById("staff-select");
-        const cur = sel.value;
-        sel.innerHTML = '<option value="">-- 名前を選んでください --</option>';
-        staffList.forEach((s) => { const o = document.createElement("option"); o.value = s.name; o.textContent = s.name; sel.appendChild(o); });
-        sel.insertAdjacentHTML("beforeend", '<option value="__ADD__">＋ 新規登録</option><option value="__DELETE__">− 職員を削除</option>');
-        if (staffList.some(s => s.name === cur)) sel.value = cur;
-
-        const delBox = document.getElementById("staff-delete-list");
-        delBox.innerHTML = staffList.length ? "" : '<p style="font-size:13px; color:var(--text-sub);">登録されている職員はいません</p>';
-        staffList.forEach((s) => {
-          const div = document.createElement("div");
-          div.className = "staff-list-item";
-          div.innerHTML = '<span style="font-size:14px;">' + s.name + '</span>';
-          const btn = document.createElement("button");
-          btn.type = "button"; btn.className = "neu-btn neu-btn-danger"; btn.textContent = "削除";
-          btn.onclick = async () => { if (confirm("「" + s.name + "」さんをリストから削除しますか？")) await deleteDoc(doc(db, "staff", s.id)); };
-          div.appendChild(btn);
-          delBox.appendChild(div);
-        });
-      });
-    };
-
-    if (localStorage.getItem("yukyu_auth") === "ok") {
-      document.getElementById("auth-screen").style.display = "none";
-      document.getElementById("main-app").style.display = "block";
-      window.startCalendarApp();
-    }
+    });
 
     document.getElementById("staff-select").addEventListener("change", (e) => {
       document.getElementById("new-staff-area").style.display = (e.target.value === "__ADD__") ? "block" : "none";
