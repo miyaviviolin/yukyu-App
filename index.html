@@ -30,19 +30,18 @@
   <div class="box">
     <h1>🌸 有給休暇 共有カレンダー</h1>
     <div id="status">データベース接続中...</div>
-    <div class="nav">
-      <button class="btn" id="prev">◀ 前月</button>
-      <strong id="ym" style="font-size:18px;"></strong>
-      <button class="btn" id="next">次月 ▶</button>
-    </div>
+    <div class="nav"><button class="btn" id="prev">◀ 前月</button><strong id="ym" style="font-size:18px;"></strong><button class="btn" id="next">次月 ▶</button></div>
     <div class="grid" id="cal"></div>
   </div>
-
   <div class="modal" id="modal">
     <div class="modal-body">
       <h3 id="m-title" style="margin:0 0 12px; text-align:center;"></h3>
       <label style="font-size:12px; font-weight:bold;">職員名</label>
-      <select id="staff"></select>
+      <select id="staff">
+        <option value="">-- 名前を選択 --</option>
+        <option value="__ADD__">＋ 新規登録</option>
+        <option value="__DEL__">− 職員を削除</option>
+      </select>
       <div id="add-box" style="display:none; margin-bottom:10px;">
         <input type="text" id="new-name" placeholder="新しい職員名">
         <button class="btn btn-primary" id="add-btn" style="width:100%;">名前を追加</button>
@@ -60,10 +59,20 @@
       </div>
     </div>
   </div>
+  <script type="module">
+    import { initializeApp } from "https://gstatic.com";
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://gstatic.com";
 
-  <script>
+    const db = getFirestore(initializeApp({
+      apiKey: "AIzaSyB7JI_LpPTHInXfvtlGfVRU1I_DOZTIFmg",
+      authDomain: "://firebaseapp.com",
+      projectId: "yukyu-calendar-5ff53",
+      storageBucket: "yukyu-calendar-5ff53.firebasestorage.app",
+      messagingSenderId: "844246207083",
+      appId: "1:844246207083:web:2e1ed37c88b787a8827f2e"
+    }));
+
     let cur = new Date(), selDate = "", leaves = [], staffs = [];
-    window.dbActions = null;
 
     function draw() {
       const y = cur.getFullYear(), m = cur.getMonth();
@@ -80,15 +89,8 @@
         }).join("");
         cal.innerHTML += '<div class="day" data-d="' + ds + '"><strong>' + d + '</strong>' + items + '</div>';
       }
-      document.querySelectorAll(".day").forEach(el => el.onclick = () => {
-        selDate = el.dataset.d;
-        document.getElementById("m-title").innerText = selDate;
-        document.getElementById("modal").style.display = "flex";
-      });
-      document.querySelectorAll(".badge").forEach(el => el.onclick = async (e) => {
-        e.stopPropagation();
-        if (window.dbActions && confirm(el.dataset.t + " を削除しますか？")) await window.dbActions.delLeave(el.dataset.id);
-      });
+      document.querySelectorAll(".day").forEach(el => el.onclick = () => { selDate = el.dataset.d; document.getElementById("m-title").innerText = selDate; document.getElementById("modal").style.display = "flex"; });
+      document.querySelectorAll(".badge").forEach(el => el.onclick = async (e) => { e.stopPropagation(); if (confirm(el.dataset.t + " を削除しますか？")) await deleteDoc(doc(db, "leaves", el.dataset.id)); });
     }
     draw();
 
@@ -99,28 +101,10 @@
       document.getElementById("add-box").style.display = e.target.value === "__ADD__" ? "block" : "none";
       document.getElementById("del-box").style.display = e.target.value === "__DEL__" ? "block" : "none";
     };
-  </script>
-
-  <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy } from "https://gstatic.com";
-
-    const db = getFirestore(initializeApp({
-      apiKey: "AIzaSyB7JI_LpPTHInXfvtlGfVRU1I_DOZTIFmg",
-      authDomain: "://firebaseapp.com",
-      projectId: "yukyu-calendar-5ff53",
-      storageBucket: "yukyu-calendar-5ff53.firebasestorage.app",
-      messagingSenderId: "844246207083",
-      appId: "1:844246207083:web:2e1ed37c88b787a8827f2e"
-    }));
 
     document.getElementById("status").innerText = "";
 
-    onSnapshot(collection(db, "leaves"), snap => {
-      leaves = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      draw();
-    }, e => document.getElementById("status").innerText = "DBエラー: " + e.message);
-
+    onSnapshot(collection(db, "leaves"), snap => { leaves = snap.docs.map(d => ({ id: d.id, ...d.data() })); draw(); }, e => document.getElementById("status").innerText = "DBエラー: " + e.message);
     onSnapshot(query(collection(db, "staff"), orderBy("createdAt", "asc")), snap => {
       staffs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const sel = document.getElementById("staff");
@@ -129,8 +113,6 @@
     });
 
     window.delS = async (id, n) => { if (confirm(n + " を削除しますか？")) await deleteDoc(doc(db, "staff", id)); };
-    window.dbActions = { delLeave: (id) => deleteDoc(doc(db, "leaves", id)) };
-
     document.getElementById("add-btn").onclick = async () => {
       const n = document.getElementById("new-name").value.trim();
       if (!n) return;
