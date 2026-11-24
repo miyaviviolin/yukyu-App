@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>有給休暇共有カレンダー</title>
+  <style>
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { margin: 0; padding: 16px; background: #f4f6f9; color: #4a5568; display: flex; justify-content: center; }
+    .box { width: 100%; max-width: 800px; background: #f4f6f9; border-radius: 24px; padding: 20px; box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff; }
+    h1 { text-align: center; font-size: 20px; color: #5a67d8; margin: 0 0 8px; }
+    #status { text-align: center; font-size: 12px; color: #e53e3e; margin-bottom: 10px; font-weight: bold; }
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .btn { background: #f4f6f9; border: none; border-radius: 14px; padding: 10px 16px; font-weight: bold; color: #4a5568; cursor: pointer; box-shadow: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff; }
+    .btn-primary { background: #9aaaf5; color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .dow { text-align: center; font-size: 12px; font-weight: bold; padding: 4px; color: #718096; }
+    .day { min-height: 75px; background: #f4f6f9; border-radius: 12px; padding: 6px; box-shadow: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; }
+    .badge { margin-top: 4px; padding: 2px 5px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+    .modal-body { width: 100%; max-width: 360px; background: #f4f6f9; border-radius: 20px; padding: 20px; box-shadow: 8px 8px 16px #b8c2d1; }
+    select, input[type="text"] { width: 100%; padding: 10px; border: none; border-radius: 12px; background: #f4f6f9; box-shadow: inset 3px 3px 6px #d1d9e6, inset -3px -3px 6px #ffffff; margin: 8px 0 14px; font-size: 15px; }
+    .types { display: flex; gap: 8px; margin-bottom: 16px; }
+    .types label { flex: 1; text-align: center; padding: 10px; border-radius: 12px; box-shadow: 3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; font-weight: bold; }
+    .types input { display: none; }
+    .types input:checked + label { background: #ffb7b2; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🌸 有給休暇 共有カレンダー</h1>
+    <div id="status"></div>
+    <div class="nav">
+      <button type="button" class="btn" id="prev">◀ 前月</button>
+      <strong id="ym" style="font-size:18px;"></strong>
+      <button type="button" class="btn" id="next">次月 ▶</button>
+    </div>
+    <div class="grid" id="cal"></div>
+  </div>
+  <div class="modal" id="modal">
+    <div class="modal-body">
+      <h3 id="m-title" style="margin:0 0 12px; text-align:center;"></h3>
+      <label style="font-size:12px; font-weight:bold;">職員名</label>
+      <select id="staff">
+        <option value="">-- 名前を選択 --</option>
+        <option value="__ADD__">＋ 新規登録</option>
+        <option value="__DEL__">− 職員を削除</option>
+      </select>
+      <div id="add-box" style="display:none; margin-bottom:10px;">
+        <input type="text" id="new-name" placeholder="新しい職員名">
+        <button type="button" class="btn btn-primary" id="add-btn" style="width:100%;">名前を追加</button>
+      </div>
+      <div id="del-box" style="display:none; margin-bottom:10px;"></div>
+      <label style="font-size:12px; font-weight:bold;">休暇の種類</label>
+      <div class="types">
+        <input type="radio" name="lt" id="t1" value="全休" checked><label for="t1">全休</label>
+        <input type="radio" name="lt" id="t2" value="午前休"><label for="t2">午前休</label>
+        <input type="radio" name="lt" id="t3" value="午後休"><label for="t3">午後休</label>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button type="button" class="btn" id="close" style="flex:1;">閉じる</button>
+        <button type="button" class="btn btn-primary" id="save" style="flex:1;">登録</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    var SB_URL = "https://" + "krwddlhwqkgggyxdcncn" + ".supabase.co/rest/v1";
+    var SB_KEY = "sb_publishable_nfJsyzjRbQ8jeIHgVHwoqg_-B1glb0G";
+    var cur = new Date(), selDate = "", leaves = [], staffs = [];
+
+    function api(path, opt) {
+      opt = opt || {};
+      opt.headers = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+      return fetch(SB_URL + path, opt);
+    }
+
+    function draw() {
+      var y = cur.getFullYear(), m = cur.getMonth();
+      document.getElementById("ym").innerText = y + "年 " + (m + 1) + "月";
+      var cal = document.getElementById("cal");
+      cal.innerHTML = ["日","月","火","水","木","金","土"].map(function(d){ return '<div class="dow">' + d + '</div>'; }).join("");
+      var first = new Date(y, m, 1).getDay(), last = new Date(y, m + 1, 0).getDate();
+      for (var i = 0; i < first; i++) cal.innerHTML += '<div></div>';
+      for (var d = 1; d <= last; d++) {
+        var ds = y + "-" + String(m+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+        var items = leaves.filter(function(l){ return l.date === ds; }).map(function(l){
+          var bg = l.type === "全休" ? "#ffb7b2" : l.type === "午前休" ? "#a0d2eb" : "#b5ead7";
+          return '<div class="badge" style="background:' + bg + '" onclick="delL(event,' + l.id + ')">' + l.name + '・' + l.type + '</div>';
+        }).join("");
+        cal.innerHTML += '<div class="day" onclick="openM(\'' + ds + '\')"><strong>' + d + '</strong>' + items + '</div>';
+      }
+    }
+    draw();
+
+    async function loadAll() {
+      try {
+        var r1 = await api("/leaves?select=*");
+        if (!r1.ok) throw new Error(await r1.text());
+        leaves = await r1.json();
+        draw();
+
+        var r2 = await api("/staff?select=*");
+        if (!r2.ok) throw new Error(await r2.text());
+        staffs = await r2.json();
+
+        var sel = document.getElementById("staff");
+        var old = sel.value;
+        sel.innerHTML = '<option value="">-- 名前を選択 --</option>' + staffs.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join("") + '<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>';
+        if (staffs.some(function(s){ return s.name === old; })) sel.value = old;
+        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(\'' + s.name + '\')">削除</button></div>'; }).join("");
+        document.getElementById("status").innerText = "";
+      } catch (e) { document.getElementById("status").innerText = "エラー: " + e.message; }
+    }
+    loadAll();
+    setInterval(loadAll, 5000);
+
+    function openM(ds) { selDate = ds; document.getElementById("m-title").innerText = ds; document.getElementById("modal").style.display = "flex"; }
+    async function delL(e, id) { e.stopPropagation(); if (confirm("削除しますか？")) { await api("/leaves?id=eq." + id, { method: "DELETE" }); loadAll(); } }
+    async function delS(name) { if (confirm("削除しますか？")) { await api("/staff?name=eq." + encodeURIComponent(name), { method: "DELETE" }); loadAll(); } }
+    document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
+    document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
+    document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
+    document.getElementById("staff").onchange = function(e) {
+      document.getElementById("add-box").style.display = e.target.value === "__ADD__" ? "block" : "none";
+      document.getElementById("del-box").style.display = e.target.value === "__DEL__" ? "block" : "none";
+    };
+    document.getElementById("add-btn").onclick = async function() {
+      var n = document.getElementById("new-name").value.trim();
+      if (!n) return;
+      var res = await api("/staff", { method: "POST", body: JSON.stringify({ name: n }) });
+      if (!res.ok) return alert("追加エラー: " + await res.text());
+      document.getElementById("new-name").value = "";
+      document.getElementById("add-box").style.display = "none";
+      await loadAll();
+      document.getElementById("staff").value = n;
+    };
+    document.getElementById("save").onclick = async function() {
+      var name = document.getElementById("staff").value;
+      if (!name || name.indexOf("__") === 0) return alert("名前を選択してください");
+      var type = document.querySelector('input[name="lt"]:checked').value;
+      var res = await api("/leaves", { method: "POST", body: JSON.stringify({ date: selDate, name: name, type: type }) });
+      if (!res.ok) return alert("登録エラー: " + await res.text());
+      document.getElementById("modal").style.display = "none";
+      loadAll();
+    };
+  </script>
+</body>
+</html>
