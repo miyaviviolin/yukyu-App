@@ -64,7 +64,9 @@
     </div>
   </div>
   <script>
-    var API = "https://googleapis.com";
+    var SB_URL = "https://supabase.co";
+    var SB_KEY = "sb_publishable_nfJsyzjRbQ8jeIHgVHwoqg_-B1glb0G";
+    var HDR = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
     var cur = new Date(), selDate = "", leaves = [], staffs = [];
 
     function draw() {
@@ -78,7 +80,7 @@
         var ds = y + "-" + String(m+1).padStart(2,"0") + "-" + String(d).padStart(2,"0");
         var items = leaves.filter(function(l){ return l.date === ds; }).map(function(l){
           var bg = l.type === "全休" ? "#ffb7b2" : l.type === "午前休" ? "#a0d2eb" : "#b5ead7";
-          return '<div class="badge" style="background:' + bg + '" onclick="delL(event,\'' + l.path + '\')">' + l.name + '・' + l.type + '</div>';
+          return '<div class="badge" style="background:' + bg + '" onclick="delL(event,' + l.id + ')">' + l.name + '・' + l.type + '</div>';
         }).join("");
         cal.innerHTML += '<div class="day" onclick="openM(\'' + ds + '\')"><strong>' + d + '</strong>' + items + '</div>';
       }
@@ -87,27 +89,20 @@
 
     async function loadAll() {
       try {
-        var r1 = await fetch(API + "/leaves?pageSize=300");
-        var j1 = await r1.json();
-        if (j1.error) throw new Error(j1.error.message);
-        leaves = (j1.documents || []).map(function(doc) {
-          var f = doc.fields || {};
-          return { path: doc.name, date: f.date ? f.date.stringValue : "", name: f.name ? f.name.stringValue : "", type: f.type ? f.type.stringValue : "" };
-        });
+        var r1 = await fetch(SB_URL + "/leaves?select=*&order=id.asc", { headers: HDR });
+        if (!r1.ok) throw new Error(await r1.text());
+        leaves = await r1.json();
         draw();
 
-        var r2 = await fetch(API + "/staff?pageSize=100");
-        var j2 = await r2.json();
-        staffs = (j2.documents || []).map(function(doc) {
-          var f = doc.fields || {};
-          return { path: doc.name, name: f.name ? f.name.stringValue : "", ts: f.createdAt ? Number(f.createdAt.integerValue) : 0 };
-        }).sort(function(a, b) { return a.ts - b.ts; });
+        var r2 = await fetch(SB_URL + "/staff?select=*&order=id.asc", { headers: HDR });
+        if (!r2.ok) throw new Error(await r2.text());
+        staffs = await r2.json();
 
         var sel = document.getElementById("staff");
         var old = sel.value;
         sel.innerHTML = '<option value="">-- 名前を選択 --</option>' + staffs.map(function(s){ return '<option value="' + s.name + '">' + s.name + '</option>'; }).join("") + '<option value="__ADD__">＋ 新規登録</option><option value="__DEL__">− 職員を削除</option>';
         if (staffs.some(function(s){ return s.name === old; })) sel.value = old;
-        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(\'' + s.path + '\')">削除</button></div>'; }).join("");
+        document.getElementById("del-box").innerHTML = staffs.map(function(s){ return '<div style="display:flex;justify-content:space-between;margin:4px 0;"><span>' + s.name + '</span><button type="button" class="btn" style="padding:4px 10px;background:#ffb7b2;" onclick="delS(' + s.id + ')">削除</button></div>'; }).join("");
         document.getElementById("status").innerText = "";
       } catch (e) { document.getElementById("status").innerText = "通信エラー: " + e.message; }
     }
@@ -115,8 +110,8 @@
     setInterval(loadAll, 5000);
 
     function openM(ds) { selDate = ds; document.getElementById("m-title").innerText = ds; document.getElementById("modal").style.display = "flex"; }
-    async function delL(e, path) { e.stopPropagation(); if (confirm("削除しますか？")) { await fetch("https://googleapis.com" + path, { method: "DELETE" }); loadAll(); } }
-    async function delS(path) { if (confirm("削除しますか？")) { await fetch("https://googleapis.com" + path, { method: "DELETE" }); loadAll(); } }
+    async function delL(e, id) { e.stopPropagation(); if (confirm("削除しますか？")) { await fetch(SB_URL + "/leaves?id=eq." + id, { method: "DELETE", headers: HDR }); loadAll(); } }
+    async function delS(id) { if (confirm("削除しますか？")) { await fetch(SB_URL + "/staff?id=eq." + id, { method: "DELETE", headers: HDR }); loadAll(); } }
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
@@ -127,7 +122,8 @@
     document.getElementById("add-btn").onclick = async function() {
       var n = document.getElementById("new-name").value.trim();
       if (!n) return;
-      await fetch(API + "/staff", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { name: { stringValue: n }, createdAt: { integerValue: String(Date.now()) } } }) });
+      var res = await fetch(SB_URL + "/staff", { method: "POST", headers: HDR, body: JSON.stringify({ name: n }) });
+      if (!res.ok) return alert("追加エラー: " + await res.text());
       document.getElementById("new-name").value = "";
       document.getElementById("add-box").style.display = "none";
       await loadAll();
@@ -137,7 +133,8 @@
       var name = document.getElementById("staff").value;
       if (!name || name.indexOf("__") === 0) return alert("名前を選択してください");
       var type = document.querySelector('input[name="lt"]:checked').value;
-      await fetch(API + "/leaves", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fields: { date: { stringValue: selDate }, name: { stringValue: name }, type: { stringValue: type }, createdAt: { integerValue: String(Date.now()) } } }) });
+      var res = await fetch(SB_URL + "/leaves", { method: "POST", headers: HDR, body: JSON.stringify({ date: selDate, name: name, type: type }) });
+      if (!res.ok) return alert("登録エラー: " + await res.text());
       document.getElementById("modal").style.display = "none";
       loadAll();
     };
