@@ -69,11 +69,15 @@
     </div>
     <div id="status"></div>
     <div id="edit-banner">休診日編集モード中：日付をタップして切替（もう一度下のボタンで終了）</div>
-    <div class="nav">
-      <button type="button" class="btn" id="prev">◀ 前月</button>
+     <div class="nav">
+    <button type="button" class="btn" id="prev">◀ 前月</button>
+    <div style="display:flex; align-items:center; gap:8px;">
       <strong id="ym" style="font-size:18px;"></strong>
-      <button type="button" class="btn" id="next">次月 ▶</button>
+      <button type="button" class="btn" id="today-btn" style="padding:6px 10px; font-size:12px;">今月</button>
     </div>
+    <button type="button" class="btn" id="next">次月 ▶</button>
+  </div>
+
     <div class="grid" id="cal"></div>
     <div class="bottom-bar">
       <button type="button" class="btn" id="toggle-closed-btn">休診日の追加・削除</button>
@@ -241,6 +245,8 @@
     async function delS(name) { if (confirm("「" + name + "」さんをリストから削除しますか？")) { await api("/staff?name=eq." + encodeURIComponent(name), { method: "DELETE" }); loadAll(); } }
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
+    document.getElementById("today-btn").onclick = function() { cur = new Date(); draw(); };
+
     document.getElementById("d-close").onclick = function() { document.getElementById("detail-modal").style.display = "none"; };
     document.getElementById("d-add").onclick = openInputModal;
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
