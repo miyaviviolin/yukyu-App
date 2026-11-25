@@ -59,7 +59,7 @@
 </head>
 <body>
   <div class="box" id="app-box">
-    <h1>🌸 年次有給休暇 共有カレンダー</h1>
+    <h1> 年次有給休暇 共有カレンダー</h1>
     <div class="legend">
       <span><i class="dot-sample" style="background:#ffb7b2;"></i>全休</span>
       <span><i class="dot-sample" style="background:#a0d2eb;"></i>午前休</span>
@@ -193,7 +193,7 @@
     }
 
     function renderDetailModal() {
-      document.getElementById("d-title").innerText = selDate + " の有給予定";
+      document.getElementById("d-title").innerText = selDate + " の年休予定";
       var dayLeaves = leaves.filter(function(l){ return l.date === selDate; });
       var listEl = document.getElementById("d-list");
       if (dayLeaves.length === 0) { document.getElementById("detail-modal").style.display = "none"; return; }
@@ -204,7 +204,7 @@
 
     function openInputModal() {
       document.getElementById("detail-modal").style.display = "none";
-      document.getElementById("m-title").innerText = selDate + " の新規登録";
+      document.getElementById("m-title").innerText = selDate + " の年休新規登録";
       document.getElementById("modal").style.display = "flex";
     }
     async function loadAll() {
