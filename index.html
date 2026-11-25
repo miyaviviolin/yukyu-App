@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>有給休暇共有カレンダー</title>
+  <title>年次有給休暇共有カレンダー</title>
   <style>
     * { box-sizing: border-box; font-family: sans-serif; }
     body { margin: 0; padding: 14px; background: #f4f6f9; color: #4a5568; display: flex; justify-content: center; }
@@ -39,7 +39,7 @@
 </head>
 <body>
   <div class="box">
-    <h1>🌸 有給休暇 共有カレンダー</h1>
+    <h1>🌸 年次有給休暇 共有カレンダー</h1>
     <div class="legend">
       <span><i class="dot-sample" style="background:#ffb7b2;"></i>全休</span>
       <span><i class="dot-sample" style="background:#a0d2eb;"></i>午前休</span>
@@ -144,7 +144,7 @@
     }
 
     function renderDetailModal() {
-      document.getElementById("d-title").innerText = selDate + " の有給予定";
+      document.getElementById("d-title").innerText = selDate + " の年給予定";
       var dayLeaves = leaves.filter(function(l){ return l.date === selDate; });
       var listEl = document.getElementById("d-list");
       if (dayLeaves.length === 0) {
