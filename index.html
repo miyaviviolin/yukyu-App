@@ -193,7 +193,7 @@
     }
 
     function renderDetailModal() {
-      document.getElementById("d-title").innerText = selDate + " の年休予定";
+      document.getElementById("d-title").innerText = selDate + " の年休取得希望者";
       var dayLeaves = leaves.filter(function(l){ return l.date === selDate; });
       var listEl = document.getElementById("d-list");
       if (dayLeaves.length === 0) { document.getElementById("detail-modal").style.display = "none"; return; }
