@@ -163,7 +163,7 @@
       }
     }
     draw();
-    async function onDayClick(ds, currentlyClosed) {
+        async function onDayClick(ds, currentlyClosed) {
       if (isEditClosed) {
         var nextState = !currentlyClosed;
         var dayLeaves = leaves.filter(function(l){ return l.date === ds; });
@@ -171,7 +171,17 @@
           if (!confirm(ds + " を休診日に変更しますか？\n（※すでに申請されている " + dayLeaves.length + "件 の年休は自動的にリセットされます）")) return;
           await api("/leaves?date=eq." + ds, { method: "DELETE" });
         }
-        await api("/closed_days", { method: "POST", headers: { "Prefer": "resolution=merge-duplicates" }, body: JSON.stringify({ date: ds, is_closed: nextState }) });
+        var res = await api("/closed_days?on_conflict=date", {
+          method: "POST",
+          headers: {
+            "apikey": SB_KEY,
+            "Authorization": "Bearer " + SB_KEY,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates"
+          },
+          body: JSON.stringify({ date: ds, is_closed: nextState })
+        });
+        if (!res.ok) return alert("休診日エラー: " + await res.text());
         await loadAll();
         return;
       }
@@ -197,7 +207,6 @@
       document.getElementById("m-title").innerText = selDate + " の新規登録";
       document.getElementById("modal").style.display = "flex";
     }
-
     async function loadAll() {
       try {
         var r1 = await api("/leaves?select=*"); if (!r1.ok) throw new Error(await r1.text()); leaves = await r1.json();
