@@ -2,9 +2,8 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <title>🦷年次有給休暇共有カレンダー🦷</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>年次有給休暇共有カレンダー</title>
   <link rel="apple-touch-icon" id="app-icon">
   <script>
     (function(){
@@ -22,64 +21,65 @@
   </script>
   <style>
     * { box-sizing: border-box; font-family: sans-serif; }
-   body { margin: 0; padding: 14px; background: #e3f2f6; color: #3b4d59; display: flex; justify-content: center; touch-action: manipulation; }
-
+    body { margin: 0; padding: 14px; background: #e3f2f6; color: #3b4d59; display: flex; justify-content: center; touch-action: manipulation; }
     .box { width: 100%; max-width: 720px; background: #e3f2f6; border-radius: 24px; padding: 18px; box-shadow: 8px 8px 16px #c1d5dc, -8px -8px 16px #ffffff; }
     h1 { text-align: center; font-size: 19px; color: #2b6cb0; margin: 0 0 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
-    .legend { display: flex; justify-content: center; gap: 12px; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
+    .legend { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
     .legend span { display: flex; align-items: center; gap: 4px; }
     .dot-sample { width: 11px; height: 11px; border-radius: 50%; display: inline-block; box-shadow: 1px 1px 2px rgba(0,0,0,0.15); }
     #status { text-align: center; font-size: 12px; color: #e53e3e; margin-bottom: 6px; font-weight: bold; }
     #edit-banner { display: none; text-align: center; background: #fed7d7; color: #c53030; padding: 8px; border-radius: 12px; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
-    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .btn { background: #e3f2f6; border: none; border-radius: 14px; padding: 10px 14px; font-weight: bold; color: #3b4d59; cursor: pointer; box-shadow: 4px 4px 8px #c1d5dc, -4px -4px 8px #ffffff; font-size: 13px; }
-    .btn:active { box-shadow: inset 3px 3px 6px #c1d5dc, inset -3px -3px 6px #ffffff; }
-    .btn-primary { background: #63b3ed; color: #fff; }
-    .btn-danger { background: #ffb7b2; color: #3b4d59; padding: 5px 10px; font-size: 12px; }
-    .btn-active-edit { background: #fc8181; color: #fff; box-shadow: inset 3px 3px 6px rgba(0,0,0,0.15); }
-    .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .dow { text-align: center; font-size: 12px; font-weight: bold; padding: 4px; color: #5a7180; }
-    .day { height: 84px; background: #e3f2f6; border-radius: 12px; padding: 8px 4px; box-shadow: 3px 3px 6px #c1d5dc, -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-    .day.closed { background: #d2e3e8; box-shadow: inset 2px 2px 5px #b8ccd2, inset -2px -2px 5px #f2f9fb; color: #8fa6b2; cursor: not-allowed; }
-    .edit-mode .day { cursor: pointer !important; border: 2px dashed #fc8181; }
-    .dots { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 16px; align-items: center; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; box-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
-    .bottom-bar { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
-    .bottom-bar .btn { flex: 1; padding: 12px 10px; }
-    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
-    .modal-body { width: 100%; max-width: 360px; background: #e3f2f6; border-radius: 22px; padding: 20px; box-shadow: 8px 8px 16px #9fb8c0; }
-    select, input[type="text"] { width: 100%; padding: 10px; border: none; border-radius: 12px; background: #e3f2f6; box-shadow: inset 3px 3px 6px #c1d5dc, inset -3px -3px 6px #ffffff; margin: 8px 0 14px; font-size: 15px; }
-    .types { display: flex; gap: 8px; margin-bottom: 16px; }
-    .types label { flex: 1; text-align: center; padding: 10px; border-radius: 12px; box-shadow: 3px 3px 6px #c1d5dc, -3px -3px 6px #ffffff; cursor: pointer; font-size: 13px; font-weight: bold; }
-    .types input { display: none; }
-    .types input#t1:checked + label { background: #ffb7b2; }
-    .types input#t2:checked + label { background: #a0d2eb; }
-    .types input#t3:checked + label { background: #b5ead7; }
-    .detail-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; margin-bottom: 8px; border-radius: 14px; background: #e3f2f6; box-shadow: inset 2px 2px 5px #c1d5dc, inset -2px -2px 5px #ffffff; font-size: 14px; font-weight: bold; }
-    .tag { padding: 3px 8px; border-radius: 8px; font-size: 12px; margin-left: 6px; }
-  </style>
-
-</head>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>年次有給休暇共有カレンダー</title>
+  <link rel="apple-touch-icon" id="app-icon">
+  <script>
+    (function(){
+      var c = document.createElement("canvas"); c.width = c.height = 512;
+      var x = c.getContext("2d");
+      var g = x.createLinearGradient(0, 0, 512, 512);
+      g.addColorStop(0, "#ff758c"); g.addColorStop(1, "#ff4b2b");
+      x.fillStyle = g; x.fillRect(0, 0, 512, 512);
+      x.fillStyle = "#ffffff"; x.font = "900 185px sans-serif";
+      x.textAlign = "center"; x.textBaseline = "middle";
+      x.shadowColor = "rgba(130,0,20,0.35)"; x.shadowBlur = 18; x.shadowOffsetY = 8;
+      x.fillText("291", 256, 268);
+      document.getElementById("app-icon").href = c.toDataURL("image/png");
+    })();
+  </script>
+  <style>
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { margin: 0; padding: 14px; background: #e3f2f6; color: #3b4d59; display: flex; justify-content: center; touch-action: manipulation; }
+    .box { width: 100%; max-width: 720px; background: #e3f2f6; border-radius: 24px; padding: 18px; box-shadow: 8px 8px 16px #c1d5dc, -8px -8px 16px #ffffff; }
+    h1 { text-align: center; font-size: 19px; color: #2b6cb0; margin: 0 0 8px; text-shadow: 0 1px 2px rgba(0,0,0,0.12); }
+    .legend { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+    .dot-sample { width: 11px; height: 11px; border-radius: 50%; display: inline-block; box-shadow: 1px 1px 2px rgba(0,0,0,0.15); }
+    #status { text-align: center; font-size: 12px; color: #e53e3e; margin-bottom: 6px; font-weight: bold; }
+    #edit-banner { display: none; text-align: center; background: #fed7d7; color: #c53030; padding: 8px; border-radius: 12px; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
 <body>
   <div class="box" id="app-box">
-    <h1> 🦷年次有給休暇 共有カレンダー🦷</h1>
+    <h1>🦷 年次有給休暇 共有カレンダー</h1>
     <div class="legend">
       <span><i class="dot-sample" style="background:#ffb7b2;"></i>全休</span>
       <span><i class="dot-sample" style="background:#a0d2eb;"></i>午前休</span>
       <span><i class="dot-sample" style="background:#b5ead7;"></i>午後休</span>
-      <span style="color:#a0aec0;">■休診</span>
+      <span><i class="dot-sample" style="background:#ff4b2b; width:8px; height:8px;"></i>未確認</span>
+      <span style="color:#8fa6b2;">■休診</span>
     </div>
     <div id="status"></div>
     <div id="edit-banner">休診日編集モード中：日付をタップして切替（もう一度下のボタンで終了）</div>
-     <div class="nav">
-    <button type="button" class="btn" id="prev">◀ 前月</button>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <strong id="ym" style="font-size:18px;"></strong>
-      <button type="button" class="btn" id="today-btn" style="padding:6px 10px; font-size:12px;">今月</button>
+    <div class="nav">
+      <button type="button" class="btn" id="prev">◀ 前月</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <strong id="ym" style="font-size:18px;"></strong>
+        <button type="button" class="btn" id="today-btn" style="padding:6px 10px; font-size:12px;">今月</button>
+      </div>
+      <button type="button" class="btn" id="next">次月 ▶</button>
     </div>
-    <button type="button" class="btn" id="next">次月 ▶</button>
-  </div>
-
     <div class="grid" id="cal"></div>
     <div class="bottom-bar">
       <button type="button" class="btn" id="toggle-closed-btn">休診日の追加・削除</button>
@@ -138,7 +138,9 @@
 
     function api(path, opt) {
       opt = opt || {};
-      opt.headers = Object.assign({ "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" }, opt.headers || {});
+      var h = { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" };
+      if (opt.headers) { for (var k in opt.headers) h[k] = opt.headers[k]; }
+      opt.headers = h;
       return fetch(SB_URL + path, opt);
     }
 
@@ -162,15 +164,18 @@
         var closed = isDayClosed(ds, dow);
         var dayLeaves = leaves.filter(function(l){ return l.date === ds; });
         var dots = dayLeaves.map(function(l){ return '<span class="dot" style="background:' + getColor(l.type) + '"></span>'; }).join("");
+        var seenMax = Number(localStorage.getItem("seen_" + ds) || 0);
+        var hasNew = dayLeaves.some(function(l){ return Number(l.id) > seenMax; });
+        var badge = hasNew ? '<span class="new-dot"></span>' : '';
         if (closed) {
           cal.innerHTML += '<div class="day closed" onclick="onDayClick(\'' + ds + '\', true)"><strong>' + d + '</strong><span style="font-size:10px;">休診</span></div>';
         } else {
-          cal.innerHTML += '<div class="day" onclick="onDayClick(\'' + ds + '\', false)"><strong>' + d + '</strong><div class="dots">' + dots + '</div></div>';
+          cal.innerHTML += '<div class="day" onclick="onDayClick(\'' + ds + '\', false)">' + badge + '<strong>' + d + '</strong><div class="dots">' + dots + '</div></div>';
         }
       }
     }
     draw();
-        async function onDayClick(ds, currentlyClosed) {
+    async function onDayClick(ds, currentlyClosed) {
       if (isEditClosed) {
         var nextState = !currentlyClosed;
         var dayLeaves = leaves.filter(function(l){ return l.date === ds; });
@@ -180,12 +185,7 @@
         }
         var res = await api("/closed_days?on_conflict=date", {
           method: "POST",
-          headers: {
-            "apikey": SB_KEY,
-            "Authorization": "Bearer " + SB_KEY,
-            "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates"
-          },
+          headers: { "Prefer": "resolution=merge-duplicates" },
           body: JSON.stringify({ date: ds, is_closed: nextState })
         });
         if (!res.ok) return alert("休診日エラー: " + await res.text());
@@ -195,12 +195,14 @@
       if (currentlyClosed) return;
       selDate = ds;
       var dayLeaves = leaves.filter(function(l){ return l.date === ds; });
+      var maxId = dayLeaves.reduce(function(m, l){ return Math.max(m, Number(l.id)); }, 0);
+      if (maxId > 0) { localStorage.setItem("seen_" + ds, maxId); draw(); }
       if (dayLeaves.length > 0) { renderDetailModal(); document.getElementById("detail-modal").style.display = "flex"; }
       else { openInputModal(); }
     }
 
     function renderDetailModal() {
-      document.getElementById("d-title").innerText = selDate + " の年休取得希望者";
+      document.getElementById("d-title").innerText = selDate + " の年休予定";
       var dayLeaves = leaves.filter(function(l){ return l.date === selDate; });
       var listEl = document.getElementById("d-list");
       if (dayLeaves.length === 0) { document.getElementById("detail-modal").style.display = "none"; return; }
@@ -214,6 +216,7 @@
       document.getElementById("m-title").innerText = selDate + " の年休新規登録";
       document.getElementById("modal").style.display = "flex";
     }
+
     async function loadAll() {
       try {
         var r1 = await api("/leaves?select=*"); if (!r1.ok) throw new Error(await r1.text()); leaves = await r1.json();
@@ -248,7 +251,6 @@
     document.getElementById("prev").onclick = function() { cur.setMonth(cur.getMonth() - 1); draw(); };
     document.getElementById("next").onclick = function() { cur.setMonth(cur.getMonth() + 1); draw(); };
     document.getElementById("today-btn").onclick = function() { cur = new Date(); draw(); };
-
     document.getElementById("d-close").onclick = function() { document.getElementById("detail-modal").style.display = "none"; };
     document.getElementById("d-add").onclick = openInputModal;
     document.getElementById("close").onclick = function() { document.getElementById("modal").style.display = "none"; };
@@ -268,7 +270,10 @@
       var res = await api("/leaves", { method: "POST", body: JSON.stringify({ date: selDate, name: name, type: type }) });
       if (!res.ok) return alert("登録エラー: " + await res.text());
       document.getElementById("modal").style.display = "none";
-      loadAll();
+      await loadAll();
+      var dayLeaves = leaves.filter(function(l){ return l.date === selDate; });
+      var maxId = dayLeaves.reduce(function(m, l){ return Math.max(m, Number(l.id)); }, 0);
+      if (maxId > 0) { localStorage.setItem("seen_" + selDate, maxId); draw(); }
     };
   </script>
 </body>
